@@ -1175,6 +1175,50 @@ read_size_body (iobuf_t inp, int pktlen, size_t *r_nread,
   return 0;
 }
 
+/* Reads FIDO2 signature information (flags, count, optional extended info)
+   from INP.  On success store an opaque MPI with it at R_DATA.  On error
+   return an error code and store NULL at R_DATA.  Even in the error case
+   store the number of read bytes at R_NREAD.  The caller shall pass the
+   remaining size of the packet in PKTLEN.  */
+static gpg_error_t
+read_fido2_mpi (iobuf_t inp, int pktlen, size_t *r_nread,
+                gcry_mpi_t *r_data)
+{
+  char buffer[5];
+  char *tmpbuf;
+  int i, c, nbytes;
+
+  *r_nread = 0;
+  *r_data = NULL;
+
+  if (!pktlen)
+    return gpg_error (GPG_ERR_INV_PACKET);
+
+  /* Read the flags + counter */
+  nbytes = 5;
+  for (i = 0; i < nbytes; i++)
+    {
+      c = iobuf_get (inp);
+      if (c < 0)
+        return gpg_error (GPG_ERR_INV_PACKET);
+      ++*r_nread;
+      buffer[i] = c;
+    }
+
+  /* TODO: If buffer[0] & 0x80 (i.e. bit 7 on flags), read more */
+
+  tmpbuf = xtrymalloc (nbytes);
+  if (!tmpbuf)
+    return gpg_error_from_syserror ();
+  memcpy (tmpbuf, buffer, nbytes);
+  *r_data = gcry_mpi_set_opaque (NULL, tmpbuf, 8 * (nbytes));
+  if (!*r_data)
+    {
+      xfree (tmpbuf);
+      return gpg_error_from_syserror ();
+    }
+  return 0;
+}
 
 /* Parse a marker packet.  */
 static int
@@ -2321,7 +2365,10 @@ parse_signature (IOBUF inp, int pkttype, unsigned long pktlen,
       for (i = 0; i < ndata; i++)
 	{
 	  n = pktlen;
-	  sig->data[i] = mpi_read (inp, &n, 0);
+	  if (sig->pubkey_algo == PUBKEY_ALGO_SK_NISTP256 && i == 2)
+	    read_fido2_mpi (inp, pktlen, &n, &sig->data[i]);
+	  else
+	    sig->data[i] = mpi_read (inp, &n, 0);
 	  pktlen -= n;
 	  if (list_mode)
 	    {
@@ -2533,9 +2580,10 @@ parse_key (IOBUF inp, int pkttype, unsigned long pktlen,
         {
           if (    (algorithm == PUBKEY_ALGO_ECDSA && (i == 0))
                || (algorithm == PUBKEY_ALGO_EDDSA && (i == 0))
-               || (algorithm == PUBKEY_ALGO_ECDH  && (i == 0 || i == 2)))
+               || (algorithm == PUBKEY_ALGO_ECDH  && (i == 0 || i == 2))
+               || (algorithm == PUBKEY_ALGO_SK_NISTP256 && (i == 1)))
             {
-              /* Read the OID (i==1) or the KDF params (i==2).  */
+              /* Read the OID (i==0) or the KDF/RP params (i==2).  */
               size_t n;
 	      err = read_size_body (inp, pktlen, &n, pk->pkey+i);
               pktlen -= n;
@@ -2563,6 +2611,11 @@ parse_key (IOBUF inp, int pkttype, unsigned long pktlen,
                   es_fprintf (listfp, " %s (%s)", name?name:"", curve);
                   xfree (curve);
                 }
+              if (algorithm == PUBKEY_ALGO_SK_NISTP256 && i==1) {
+                  unsigned int n;
+                  const char *rp = gcry_mpi_get_opaque(pk->pkey[1], &n);
+                  es_fprintf (listfp, " %.*s", rp[0], &rp[1]);
+              }
               es_putc ('\n', listfp);
             }
         }

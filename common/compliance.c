@@ -161,6 +161,7 @@ gnupg_pk_is_compliant (enum gnupg_compliance_mode compliance, int algo,
     case PUBKEY_ALGO_ECDH:
     case PUBKEY_ALGO_ECDSA:
     case PUBKEY_ALGO_EDDSA:
+    case PUBKEY_ALGO_SK_NISTP256:
       algotype = is_ecc;
       break;
 
@@ -341,6 +342,9 @@ gnupg_pk_is_allowed (enum gnupg_compliance_mode compliance,
             }
           break;
 
+	case PUBKEY_ALGO_SK_NISTP256:
+	  result = (use == PK_USE_VERIFICATION);
+          break;
 
 	case PUBKEY_ALGO_EDDSA:
 	  break;

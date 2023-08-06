@@ -600,6 +600,10 @@ hash_for (PKT_public_key *pk)
       else
         return DIGEST_ALGO_SHA256;
     }
+  else if (pk->pubkey_algo == PUBKEY_ALGO_SK_NISTP256)
+    {
+      return DIGEST_ALGO_SHA256;
+    }
   else if (pk->pubkey_algo == PUBKEY_ALGO_DSA
            || pk->pubkey_algo == PUBKEY_ALGO_ECDSA)
     {
@@ -1636,6 +1640,8 @@ make_keysig_packet (ctrl_t ctrl,
               digest_algo = match_dsa_hash
                 (ecdsa_qbits_from_Q (gcry_mpi_get_nbits (pksk->pkey[1]))/8);
           }
+	else if(pksk->pubkey_algo == PUBKEY_ALGO_SK_NISTP256)
+          digest_algo = DIGEST_ALGO_SHA256;
 	else
 	  digest_algo = DEFAULT_DIGEST_ALGO;
       }

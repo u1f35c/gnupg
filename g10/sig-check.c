@@ -565,8 +565,33 @@ check_signature_end_simple (PKT_public_key *pk, PKT_signature *sig,
     }
   gcry_md_final( digest );
 
+  if (pk->pubkey_algo == PUBKEY_ALGO_SK_NISTP256)
+    {
+      unsigned int n;
+      gcry_md_hd_t rpdigest, skdigest;
+      const char *rp = gcry_mpi_get_opaque(pk->pkey[1], &n);
+
+      gcry_md_open (&rpdigest, GCRY_MD_SHA256, 0);
+      gcry_md_write (rpdigest, &rp[1], rp[0]);
+      gcry_md_final( rpdigest );
+
+      rp = gcry_mpi_get_opaque(sig->data[2], &n);
+
+      /*
+        SK-ECDSA signature is over SHA256(rp) + flags + counter + SHA256(data)
+       */
+      gcry_md_open (&skdigest, GCRY_MD_SHA256, 0);
+      gcry_md_write (skdigest, gcry_md_read (rpdigest, GCRY_MD_SHA256), gcry_md_get_algo_dlen (GCRY_MD_SHA256));
+      gcry_md_write (skdigest, rp, n/8);
+      gcry_md_write (skdigest, gcry_md_read (digest, sig->digest_algo), gcry_md_get_algo_dlen (sig->digest_algo));
+      gcry_md_final( skdigest );
+
+      result = encode_md_value (pk, skdigest, GCRY_MD_SHA256 );
+    }
+  else
+    result = encode_md_value (pk, digest, sig->digest_algo );
+
   /* Convert the digest to an MPI.  */
-  result = encode_md_value (pk, digest, sig->digest_algo );
   if (!result)
     return GPG_ERR_GENERAL;
 

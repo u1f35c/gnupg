@@ -739,8 +739,12 @@ openpgp_pk_test_algo2 (pubkey_algo_t algo, unsigned int use)
 
 #ifdef GPG_USE_ECDSA
     case PUBKEY_ALGO_ECDSA:     ga = GCRY_PK_ECC;   break;
+    case PUBKEY_ALGO_SK_NISTP256:
+                                ga = GCRY_PK_ECC;   break;
 #else
     case PUBKEY_ALGO_ECDSA:     break;
+    case PUBKEY_ALGO_SK_NISTP256:
+                                break;
 #endif
 
 #ifdef GPG_USE_EDDSA
@@ -804,6 +808,10 @@ openpgp_pk_algo_usage ( int algo )
       case PUBKEY_ALGO_ECDSA:
       case PUBKEY_ALGO_EDDSA:
           use = PUBKEY_USAGE_CERT | PUBKEY_USAGE_SIG | PUBKEY_USAGE_AUTH;
+          break;
+      case PUBKEY_ALGO_SK_NISTP256:
+          use = PUBKEY_USAGE_CERT | PUBKEY_USAGE_SIG;
+          break;
       default:
           break;
     }
@@ -827,6 +835,8 @@ openpgp_pk_algo_name (pubkey_algo_t algo)
     case PUBKEY_ALGO_ECDH:      return "ECDH";
     case PUBKEY_ALGO_ECDSA:     return "ECDSA";
     case PUBKEY_ALGO_EDDSA:     return "EDDSA";
+    case PUBKEY_ALGO_SK_NISTP256:
+                                return "SK-NISTP256";
     default: return "?";
     }
 }
@@ -1676,13 +1686,14 @@ pubkey_get_npkey (pubkey_algo_t algo)
     {
     case PUBKEY_ALGO_RSA:
     case PUBKEY_ALGO_RSA_E:
-    case PUBKEY_ALGO_RSA_S:     return 2;
-    case PUBKEY_ALGO_ELGAMAL_E: return 3;
-    case PUBKEY_ALGO_DSA:       return 4;
-    case PUBKEY_ALGO_ECDH:      return 3;
-    case PUBKEY_ALGO_ECDSA:     return 2;
-    case PUBKEY_ALGO_ELGAMAL:   return 3;
-    case PUBKEY_ALGO_EDDSA:     return 2;
+    case PUBKEY_ALGO_RSA_S:       return 2;
+    case PUBKEY_ALGO_ELGAMAL_E:   return 3;
+    case PUBKEY_ALGO_DSA:         return 4;
+    case PUBKEY_ALGO_ECDH:        return 3;
+    case PUBKEY_ALGO_ECDSA:       return 2;
+    case PUBKEY_ALGO_ELGAMAL:     return 3;
+    case PUBKEY_ALGO_EDDSA:       return 2;
+    case PUBKEY_ALGO_SK_NISTP256: return 2;
     default: return 0;
     }
 }
@@ -1696,13 +1707,14 @@ pubkey_get_nskey (pubkey_algo_t algo)
     {
     case PUBKEY_ALGO_RSA:
     case PUBKEY_ALGO_RSA_E:
-    case PUBKEY_ALGO_RSA_S:     return 6;
-    case PUBKEY_ALGO_ELGAMAL_E: return 4;
-    case PUBKEY_ALGO_DSA:       return 5;
-    case PUBKEY_ALGO_ECDH:      return 4;
-    case PUBKEY_ALGO_ECDSA:     return 3;
-    case PUBKEY_ALGO_ELGAMAL:   return 4;
-    case PUBKEY_ALGO_EDDSA:     return 3;
+    case PUBKEY_ALGO_RSA_S:       return 6;
+    case PUBKEY_ALGO_ELGAMAL_E:   return 4;
+    case PUBKEY_ALGO_DSA:         return 5;
+    case PUBKEY_ALGO_ECDH:        return 4;
+    case PUBKEY_ALGO_ECDSA:       return 3;
+    case PUBKEY_ALGO_ELGAMAL:     return 4;
+    case PUBKEY_ALGO_EDDSA:       return 3;
+    case PUBKEY_ALGO_SK_NISTP256: return 4;
     default: return 0;
     }
 }
@@ -1715,13 +1727,14 @@ pubkey_get_nsig (pubkey_algo_t algo)
     {
     case PUBKEY_ALGO_RSA:
     case PUBKEY_ALGO_RSA_E:
-    case PUBKEY_ALGO_RSA_S:     return 1;
-    case PUBKEY_ALGO_ELGAMAL_E: return 0;
-    case PUBKEY_ALGO_DSA:       return 2;
-    case PUBKEY_ALGO_ECDH:      return 0;
-    case PUBKEY_ALGO_ECDSA:     return 2;
-    case PUBKEY_ALGO_ELGAMAL:   return 2;
-    case PUBKEY_ALGO_EDDSA:     return 2;
+    case PUBKEY_ALGO_RSA_S:       return 1;
+    case PUBKEY_ALGO_ELGAMAL_E:   return 0;
+    case PUBKEY_ALGO_DSA:         return 2;
+    case PUBKEY_ALGO_ECDH:        return 0;
+    case PUBKEY_ALGO_ECDSA:       return 2;
+    case PUBKEY_ALGO_ELGAMAL:     return 2;
+    case PUBKEY_ALGO_EDDSA:       return 2;
+    case PUBKEY_ALGO_SK_NISTP256: return 3;
     default: return 0;
     }
 }
@@ -1735,13 +1748,14 @@ pubkey_get_nenc (pubkey_algo_t algo)
     {
     case PUBKEY_ALGO_RSA:
     case PUBKEY_ALGO_RSA_E:
-    case PUBKEY_ALGO_RSA_S:     return 1;
-    case PUBKEY_ALGO_ELGAMAL_E: return 2;
-    case PUBKEY_ALGO_DSA:       return 0;
-    case PUBKEY_ALGO_ECDH:      return 2;
-    case PUBKEY_ALGO_ECDSA:     return 0;
-    case PUBKEY_ALGO_ELGAMAL:   return 2;
-    case PUBKEY_ALGO_EDDSA:     return 0;
+    case PUBKEY_ALGO_RSA_S:       return 1;
+    case PUBKEY_ALGO_ELGAMAL_E:   return 2;
+    case PUBKEY_ALGO_DSA:         return 0;
+    case PUBKEY_ALGO_ECDH:        return 2;
+    case PUBKEY_ALGO_ECDSA:       return 0;
+    case PUBKEY_ALGO_ELGAMAL:     return 2;
+    case PUBKEY_ALGO_EDDSA:       return 0;
+    case PUBKEY_ALGO_SK_NISTP256: return 0;
     default: return 0;
     }
 }
@@ -1789,6 +1803,12 @@ pubkey_nbits( int algo, gcry_mpi_t *key )
                                 curve, key[1]);
           xfree (curve);
         }
+    }
+  else if ((algo == PUBKEY_ALGO_SK_NISTP256) && key[0])
+    {
+        rc = gcry_sexp_build (&sexp, NULL,
+                              "(public-key(ecc(curve nistp256)(q%m)))",
+                              key[0]);
     }
   else
     return 0;

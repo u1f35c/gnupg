@@ -54,15 +54,16 @@ pubkey_letter( int algo )
 {
   switch (algo)
     {
-    case PUBKEY_ALGO_RSA:	return 'R' ;
-    case PUBKEY_ALGO_RSA_E:	return 'r' ;
-    case PUBKEY_ALGO_RSA_S:	return 's' ;
-    case PUBKEY_ALGO_ELGAMAL_E: return 'g' ;
-    case PUBKEY_ALGO_ELGAMAL:   return 'G' ;
-    case PUBKEY_ALGO_DSA:	return 'D' ;
-    case PUBKEY_ALGO_ECDH:	return 'e' ;	/* ECC DH (encrypt only) */
-    case PUBKEY_ALGO_ECDSA:	return 'E' ;	/* ECC DSA (sign only)   */
-    case PUBKEY_ALGO_EDDSA:	return 'E' ;	/* ECC EdDSA (sign only) */
+    case PUBKEY_ALGO_RSA:		return 'R' ;
+    case PUBKEY_ALGO_RSA_E:		return 'r' ;
+    case PUBKEY_ALGO_RSA_S:		return 's' ;
+    case PUBKEY_ALGO_ELGAMAL_E:		return 'g' ;
+    case PUBKEY_ALGO_ELGAMAL:		return 'G' ;
+    case PUBKEY_ALGO_DSA:		return 'D' ;
+    case PUBKEY_ALGO_ECDH:		return 'e' ;	/* ECC DH (encrypt only) */
+    case PUBKEY_ALGO_ECDSA:		return 'E' ;	/* ECC DSA (sign only)   */
+    case PUBKEY_ALGO_EDDSA:		return 'E' ;	/* ECC EdDSA (sign only) */
+    case PUBKEY_ALGO_SK_NISTP256:	return 'S' ;	/* ECC FIDO2 (sign only) */
     default: return '?';
     }
 }
@@ -112,6 +113,8 @@ pubkey_string (PKT_public_key *pk, char *buffer, size_t bufsize)
     case PUBKEY_ALGO_ECDH:
     case PUBKEY_ALGO_ECDSA:
     case PUBKEY_ALGO_EDDSA:     prefix = "";    break;
+    case PUBKEY_ALGO_SK_NISTP256:
+                                prefix = "sk-nistp"; break;
     }
 
   if (prefix && *prefix)
@@ -926,6 +929,24 @@ keygrip_from_pk (PKT_public_key *pk, unsigned char *array)
                                    "(public-key(ecc(curve%s)(flags djb-tweak)(q%m)))":
                                    "(public-key(ecc(curve%s)(q%m)))",
                                    curve, pk->pkey[1]);
+            xfree (curve);
+          }
+      }
+      break;
+
+    case PUBKEY_ALGO_SK_NISTP256:
+      {
+        char *curve = openpgp_oid_to_str (pk->pkey[0]);
+        if (!curve)
+          err = gpg_error_from_syserror ();
+        else
+          {
+            unsigned int n;
+            const char *rp = gcry_mpi_get_opaque(pk->pkey[2], &n);
+
+            err = gcry_sexp_build (&s_pkey, NULL,
+                                   "(public-key(ecc(curve%s)(flags sk)(q%m)(rp %.*s))",
+                                   curve, pk->pkey[1], rp[0], &rp[1]);
             xfree (curve);
           }
       }

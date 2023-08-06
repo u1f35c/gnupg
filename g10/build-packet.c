@@ -507,7 +507,8 @@ do_key (iobuf_t out, int ctb, PKT_public_key *pk)
     {
       if (   (pk->pubkey_algo == PUBKEY_ALGO_ECDSA && (i == 0))
           || (pk->pubkey_algo == PUBKEY_ALGO_EDDSA && (i == 0))
-          || (pk->pubkey_algo == PUBKEY_ALGO_ECDH  && (i == 0 || i == 2)))
+          || (pk->pubkey_algo == PUBKEY_ALGO_ECDH  && (i == 0 || i == 2))
+          || (pk->pubkey_algo == PUBKEY_ALGO_SK_NISTP256 && (i == 1)))
         err = gpg_mpi_write_nohdr (a, pk->pkey[i]);
       else
         err = gpg_mpi_write (a, pk->pkey[i]);
@@ -1548,7 +1549,10 @@ do_signature( IOBUF out, int ctb, PKT_signature *sig )
   if ( !n )
     write_fake_data( a, sig->data[0] );
   for (i=0; i < n && !rc ; i++ )
-    rc = gpg_mpi_write (a, sig->data[i] );
+    if (i == 2 && sig->pubkey_algo == PUBKEY_ALGO_SK_NISTP256)
+      rc = gpg_mpi_write_nohdr (a, sig->data[i]);
+    else
+      rc = gpg_mpi_write (a, sig->data[i] );
 
   if (!rc)
     {

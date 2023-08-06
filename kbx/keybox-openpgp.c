@@ -233,6 +233,17 @@ keygrip_from_keyparm (int algo, struct keyparm_s *kp, unsigned char *grip)
       }
       break;
 
+    case PUBKEY_ALGO_SK_NISTP256:
+      {
+        err = gcry_sexp_build
+          (&s_pkey, NULL,
+// TODO: Needs gcrypt support:
+// "(public-key(ecc(curve nistp256)(flags sk)(q%b)(rp %s)))",
+           "(public-key(ecc(curve nistp256)(q%b)))",
+           kp[0].len, kp[0].mpi);
+      }
+      break;
+
     default:
       err = gpg_error (GPG_ERR_PUBKEY_ALGO);
       break;
@@ -319,6 +330,9 @@ parse_key (const unsigned char *data, size_t datalen,
       npkey = 2;
       is_ecc = 1;
       break;
+    case PUBKEY_ALGO_SK_NISTP256:
+      npkey = 2;
+      break;
     default: /* Unknown algorithm. */
       return gpg_error (GPG_ERR_UNKNOWN_ALGORITHM);
     }
@@ -332,7 +346,8 @@ parse_key (const unsigned char *data, size_t datalen,
       if (datalen < 2)
         return gpg_error (GPG_ERR_INV_PACKET);
 
-      if (is_ecc && (i == 0 || i == 2))
+      if ((is_ecc && (i == 0 || i == 2)) ||
+          ((algorithm == PUBKEY_ALGO_SK_NISTP256) && (i == 1)))
         {
           nbytes = data[0];
           if (nbytes < 2 || nbytes > 254)

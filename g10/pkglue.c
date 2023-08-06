@@ -130,6 +130,12 @@ pk_verify (pubkey_algo_t pkalgo, gcry_mpi_t hash,
       if (openpgp_oid_is_ed25519 (pkey[0]))
         neededfixedlen = 256 / 8;
     }
+  else if (pkalgo == PUBKEY_ALGO_SK_NISTP256)
+    {
+        rc = gcry_sexp_build (&s_pkey, NULL,
+                              "(public-key(ecdsa(curve nistp256)(q%m)))",
+                              pkey[0]);
+    }
   else
     return GPG_ERR_PUBKEY_ALGO;
 
@@ -238,6 +244,14 @@ pk_verify (pubkey_algo_t pkalgo, gcry_mpi_t hash,
         rc = gpg_error (GPG_ERR_BAD_MPI);
       else
         rc = gcry_sexp_build (&s_sig, NULL, "(sig-val(rsa(s%m)))", data[0]);
+    }
+  else if (pkalgo == PUBKEY_ALGO_SK_NISTP256)
+    {
+      if (!data[0] || !data[1])
+        rc = gpg_error (GPG_ERR_BAD_MPI);
+      else
+        rc = gcry_sexp_build (&s_sig, NULL,
+                              "(sig-val(ecdsa(r%m)(s%m)))", data[0], data[1]);
     }
   else
     BUG ();

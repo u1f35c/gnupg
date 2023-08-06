@@ -276,15 +276,17 @@ encode_md_value (PKT_public_key *pk, gcry_md_hd_t md, int hash_algo)
                                         8*gcry_md_get_algo_dlen (hash_algo));
     }
   else if (pk->pubkey_algo == PUBKEY_ALGO_DSA
-           || pk->pubkey_algo == PUBKEY_ALGO_ECDSA)
+           || pk->pubkey_algo == PUBKEY_ALGO_ECDSA
+           || pk->pubkey_algo == PUBKEY_ALGO_SK_NISTP256)
     {
       /* It's a DSA signature, so find out the size of q.  */
 
-      size_t qbits = gcry_mpi_get_nbits (pk->pkey[1]);
+      size_t qbits = gcry_mpi_get_nbits ((pk->pubkey_algo == PUBKEY_ALGO_SK_NISTP256) ? pk->pkey[0] : pk->pkey[1]);
 
       /* pkey[1] is Q for ECDSA, which is an uncompressed point,
          i.e.  04 <x> <y>  */
-      if (pk->pubkey_algo == PUBKEY_ALGO_ECDSA)
+      if (pk->pubkey_algo == PUBKEY_ALGO_ECDSA
+          || pk->pubkey_algo == PUBKEY_ALGO_SK_NISTP256)
         qbits = ecdsa_qbits_from_Q (qbits);
 
       /* Make sure it is a multiple of 8 bits. */

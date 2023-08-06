@@ -168,6 +168,7 @@ typedef enum
     PUBKEY_ALGO_ELGAMAL     = 20, /* Elgamal encrypt+sign (legacy).  */
     /*                        21     reserved by OpenPGP.            */
     PUBKEY_ALGO_EDDSA       = 22, /* EdDSA (not yet assigned).       */
+    PUBKEY_ALGO_SK_NISTP256 = 43, /* FIDO2 backed NIST-P256 signing  */
     PUBKEY_ALGO_PRIVATE10   = 110
   }
 pubkey_algo_t;
@@ -201,7 +202,7 @@ compress_algo_t;
 /* Limits to be used for static arrays.  */
 #define OPENPGP_MAX_NPKEY  5  /* Maximum number of public key parameters. */
 #define OPENPGP_MAX_NSKEY  7  /* Maximum number of secret key parameters. */
-#define OPENPGP_MAX_NSIG   2  /* Maximum number of signature parameters.  */
+#define OPENPGP_MAX_NSIG   3  /* Maximum number of signature parameters.  */
 #define OPENPGP_MAX_NENC   2  /* Maximum number of encryption parameters. */
 
 
